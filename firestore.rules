@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user is accessing their own data
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Athletes collection rules
+    match /athletes/{userId} {
+      allow read, write: if isOwner(userId);
+      
+      // Allow recruiters to read athlete profiles
+      allow read: if isAuthenticated() && 
+        exists(/databases/$(database)/documents/recruiters/$(request.auth.uid));
+    }
+
+    // Recruiters collection rules
+    match /recruiters/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Nutrition collection rules
+    match /nutrition/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Meals collection rules
+    match /meals/{mealId} {
+      allow read, write: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId;
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.userId;
+    }
+
+    // Add rules for any other collections used in the app
+    match /{document=**} {
+      allow read, write: if false; // Deny access to all other collections by default
+    }
+  }
+}

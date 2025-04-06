@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/google-fit-callback",
+      "destination": "/index.html"
+    }
+  ]
+}
